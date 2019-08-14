@@ -118,7 +118,7 @@ def random_color():
     return color
 
 
-def org2mind(file_, theme='success', jsmind='jsmind/'):
+def org2mind(file_, theme='success', jsmind='jsmind/', text=''):
     re_meta = r'^#\+(.+?):\s+(.+?)$'
     re_heading = r'^(\*+)\s+(.+?)$'
     meta = {'version': 0.2}
@@ -183,12 +183,13 @@ def org2mind(file_, theme='success', jsmind='jsmind/'):
     html = """
 <html>
     <head>
-    {jsmind}
     {mathjax}
     </head>
 <body>
+    <div hidden>{text}</div>
+    {jsmind}
 </body>
-</html>""".format(jsmind=jsmind, mathjax=get_majax())
+</html>""".format(jsmind=jsmind, mathjax=get_majax(), text=text)
 
     return html
 
@@ -205,26 +206,45 @@ def parse_args():
                         type=str,
                         default=None,
                         help='Output file')
-    parser.add_argument('-t',
+    parser.add_argument('-H',
                         '--theme',
                         type=str,
                         default='success',
                         help='Theme (default: \'success\')')
+    parser.add_argument(
+        '-t',
+        '--text',
+        nargs='+',
+        type=str,
+        default=[],
+        help='Extra text, mainly for mathjax custom commands (default: \'\')')
     parser.add_argument('-m',
                         '--jsmind',
                         type=str,
                         default='jsmind/',
                         help='Directory to jsmind (default: \'jsmind/\')')
+    parser.add_argument('--seed',
+                        type=int,
+                        default=0,
+                        help='Seed (default: 0)')
 
     args = parser.parse_args()  # pylint: disable=redefined-outer-name
 
     if not args.output:
         args.output = os.path.join(os.path.splitext(args.input)[0] + '.html')
 
+    args.text = '\n'.join(args.text)
+
     return args
 
 
 if __name__ == '__main__':
     args = parse_args()
+
+    random.seed(args.seed)
     with open(args.output, mode='w') as fd:
-        fd.write(org2mind(args.input, theme=args.theme, jsmind=args.jsmind))
+        fd.write(
+            org2mind(args.input,
+                     theme=args.theme,
+                     jsmind=args.jsmind,
+                     text=args.text))
